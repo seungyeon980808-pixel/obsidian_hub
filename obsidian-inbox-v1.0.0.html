@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --main: #0969da;
+    --sub: #0e7490;
+    --bg: #f6f8fa;
+    --text: #0d1117;
+    --muted: #57606a;
+    --divider: #d0d7de;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "IBM Plex Sans KR", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 48px;
+  }
+
+  /* header */
+  header {
+    border-bottom: 1px solid var(--divider);
+    background: #fff;
+  }
+  .header-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .brand {
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .brand .tag {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+  .auth-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .auth-email { color: var(--muted); }
+
+  /* buttons */
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    border: 1px solid var(--divider);
+    background: #fff;
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--bg); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary {
+    background: var(--main);
+    border-color: var(--main);
+    color: #fff;
+  }
+  button.primary:hover { background: #0860c4; }
+  button.danger {
+    border-color: #cf222e;
+    color: #cf222e;
+  }
+  button.danger:hover { background: #fff0f0; }
+
+  /* sections */
+  section { margin-top: 24px; }
+  .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* editor */
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 12px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: #fff;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--main);
+  }
+  .editor-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* export bar */
+  .export-bar {
+    margin-top: 24px;
+    padding: 12px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .export-note {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* memo list */
+  ul.memos { list-style: none; margin: 0; padding: 0; }
+  ul.memos li {
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .memo-title {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .memo-status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .status-saved { color: var(--sub); }
+  .status-pending { color: #9a6700; }
+
+  .empty {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 12px 0;
+  }
+
+  /* signed-out gate */
+  .gate {
+    margin-top: 48px;
+    text-align: left;
+    color: var(--muted);
+  }
+  .gate p { margin: 0 0 16px; }
+
+  /* footer */
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--divider);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* dialog */
+  dialog {
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    padding: 0;
+    max-width: 440px;
+    width: calc(100% - 32px);
+    color: var(--text);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .dlg-body { padding: 16px; }
+  .dlg-body h2 { margin: 0 0 12px; font-size: 16px; }
+  .dlg-warn {
+    color: #cf222e;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+  .dlg-preview {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    padding: 8px;
+    background: var(--bg);
+    font-size: 13px;
+  }
+  .dlg-preview div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 2px 0;
+  }
+  .dlg-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: #fff;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    max-width: calc(100% - 32px);
+    display: none;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">Obsidian Inbox<span class="tag mono">inbox</span></div>
+    <div class="auth-box">
+      <button id="loginBtn" class="primary hidden">Google 로그인</button>
+      <span id="userEmail" class="auth-email hidden"></span>
+      <button id="logoutBtn" class="hidden">로그아웃</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- signed-out gate -->
+  <div id="gate" class="gate hidden">
+    <p>메모를 수집하려면 Google 계정으로 로그인하세요.</p>
+  </div>
+
+  <!-- signed-in app -->
+  <div id="app" class="hidden">
+
+    <!-- ===== WRITE/COLLECT ===== -->
+    <section>
+      <div class="label">새 메모</div>
+      <textarea id="editor" placeholder="첫 줄은 제목처럼 쓰입니다.&#10;아래로 본문을 이어 적으세요. [[링크]], #태그 그대로 보존됩니다."></textarea>
+      <div class="editor-actions">
+        <button id="saveBtn" class="primary">저장</button>
+      </div>
+    </section>
+
+    <!-- ===== EXPORT ===== -->
+    <section>
+      <div class="export-bar">
+        <span id="exportNote" class="export-note"></span>
+        <button id="exportBtn">폴더로 내보내기</button>
+      </div>
+    </section>
+
+    <!-- ===== UI : memo list ===== -->
+    <section>
+      <div class="label">보관함 <span id="memoCount" class="mono"></span></div>
+      <ul id="memoList" class="memos"></ul>
+      <div id="memoEmpty" class="empty hidden">아직 수집된 메모가 없습니다.</div>
+    </section>
+
+  </div>
+
+  <footer class="mono">v1.0.0 · 2026.06.15</footer>
+</main>
+
+<!-- export confirm dialog -->
+<dialog id="exportDialog">
+  <div class="dlg-body">
+    <h2>메모 내보내기</h2>
+    <div id="exportPreview" class="dlg-preview"></div>
+    <p class="dlg-warn">내보낸 메모는 보관함에서 삭제됩니다</p>
+    <div class="dlg-actions">
+      <button id="exportCancel">취소</button>
+      <button id="exportConfirm" class="primary">내보내기</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast"></div>
+
+<script type="module">
+// ===== FIREBASE =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+  browserLocalPersistence, setPersistence
+} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBliwWXG8j1yk_dZt8eUr1L2Wb3ErebPQ4",
+  authDomain: "obsidian-hub-ce075.firebaseapp.com",
+  projectId: "obsidian-hub-ce075",
+  storageBucket: "obsidian-hub-ce075.firebasestorage.app",
+  messagingSenderId: "321436144551",
+  appId: "1:321436144551:web:f1197114e568d136941c82"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// offline persistence (v12 recommended approach)
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
+
+// shared state
+let currentUid = null;
+let unsubscribe = null;
+let memos = []; // { id, text, created(Date|null), pending(bool) }
+
+// dom helpers
+const $ = (id) => document.getElementById(id);
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.display = "none"; }, 3200);
+}
+
+// ===== AUTH =====
+const provider = new GoogleAuthProvider();
+
+$("loginBtn").addEventListener("click", async () => {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    toast("로그인 실패: " + (e.code || e.message));
+  }
+});
+
+$("logoutBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } catch (e) { toast("로그아웃 실패"); }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  memos = [];
+  if (user) {
+    currentUid = user.uid;
+    $("userEmail").textContent = user.email || "";
+    $("userEmail").classList.remove("hidden");
+    $("logoutBtn").classList.remove("hidden");
+    $("loginBtn").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("gate").classList.add("hidden");
+    startSync();
+  } else {
+    currentUid = null;
+    $("userEmail").classList.add("hidden");
+    $("logoutBtn").classList.add("hidden");
+    $("loginBtn").classList.remove("hidden");
+    $("app").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    renderMemos();
+  }
+});
+
+// ===== WRITE/COLLECT =====
+function inboxCol() {
+  return collection(db, "users", currentUid, "inbox");
+}
+
+$("saveBtn").addEventListener("click", saveMemo);
+$("editor").addEventListener("keydown", (e) => {
+  // Ctrl/Cmd + Enter saves
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    saveMemo();
+  }
+});
+
+async function saveMemo() {
+  if (!currentUid) return;
+  const text = $("editor").value;
+  if (!text.trim()) { toast("내용을 입력하세요"); return; }
+  // store text verbatim — NEVER modify body content
+  try {
+    await addDoc(inboxCol(), { text: text, created: serverTimestamp() });
+    $("editor").value = "";
+    $("editor").focus();
+  } catch (e) {
+    toast("저장 실패: " + (e.code || e.message));
+  }
+}
+
+// ===== SYNC STATUS =====
+function startSync() {
+  const q = query(inboxCol(), orderBy("created", "desc"));
+  unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
+    memos = snap.docs.map((d) => {
+      const data = d.data();
+      const ts = data.created; // Firestore Timestamp or null while pending
+      return {
+        id: d.id,
+        text: data.text || "",
+        created: ts && typeof ts.toDate === "function" ? ts.toDate() : null,
+        // server arrival determined ONLY by hasPendingWrites
+        pending: d.metadata.hasPendingWrites
+      };
+    });
+    renderMemos();
+  }, (err) => {
+    toast("동기화 오류: " + (err.code || err.message));
+  });
+}
+
+function firstLine(text) {
+  const line = (text || "").split("\n")[0].trim();
+  return line || "(제목 없음)";
+}
+
+function renderMemos() {
+  const list = $("memoList");
+  const empty = $("memoEmpty");
+  list.innerHTML = "";
+  $("memoCount").textContent = memos.length ? `(${memos.length})` : "";
+
+  if (!memos.length) {
+    empty.classList.remove("hidden");
+  } else {
+    empty.classList.add("hidden");
+    for (const m of memos) {
+      const li = document.createElement("li");
+
+      const title = document.createElement("span");
+      title.className = "memo-title";
+      title.textContent = firstLine(m.text);
+
+      const status = document.createElement("span");
+      status.className = "memo-status " + (m.pending ? "status-pending" : "status-saved");
+      status.textContent = m.pending ? "⚠ 대기 중" : "✓ 저장됨";
+
+      li.appendChild(title);
+      li.appendChild(status);
+      list.appendChild(li);
+    }
+  }
+
+  // export availability
+  $("exportBtn").disabled = !exportSupported || memos.length === 0;
+}
+
+// ===== FILENAME =====
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function formatCreated(date) {
+  const d = date || new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function dateTimeStamp(date) {
+  const d = date || new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+}
+
+function timeStamp(date) {
+  const d = date || new Date();
+  return `${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+}
+
+// derive base filename from first line ONLY — body content untouched
+function baseName(text, created) {
+  let name = (text || "").split("\n")[0].trim();
+  // strip [[ ]] and # and remove illegal chars (filename only)
+  name = name.replace(/\[\[/g, "").replace(/\]\]/g, "").replace(/#/g, "");
+  name = name.replace(/[\\/:*?"<>|]/g, "");
+  name = name.trim();
+  if (name.length > 50) name = name.slice(0, 50);
+  name = name.trim();
+  if (!name) name = dateTimeStamp(created);
+  return name;
+}
+
+function buildMarkdown(memo) {
+  const front = `---\ncreated: ${formatCreated(memo.created)}\ntags: []\nstatus: inbox\n---\n\n`;
+  // body text unchanged
+  return front + memo.text;
+}
+
+// ===== FOLDER HANDLE =====
+const IDB_NAME = "obsidian-inbox";
+const IDB_STORE = "handles";
+const HANDLE_KEY = "exportDir";
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(key, val) {
+  const dbi = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = dbi.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put(val, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const dbi = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = dbi.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function verifyPermission(handle) {
+  const opts = { mode: "readwrite" };
+  if ((await handle.queryPermission(opts)) === "granted") return true;
+  if ((await handle.requestPermission(opts)) === "granted") return true;
+  return false;
+}
+
+// get a usable directory handle: reuse stored one (one click to re-grant) or pick new
+async function getDirHandle() {
+  let handle = await idbGet(HANDLE_KEY);
+  if (handle) {
+    // one click ("이 폴더 계속 쓸까요?") to re-grant
+    const ok = await verifyPermission(handle);
+    if (ok) return handle;
+  }
+  handle = await window.showDirectoryPicker({ mode: "readwrite" });
+  if (!(await verifyPermission(handle))) return null;
+  await idbPut(HANDLE_KEY, handle);
+  return handle;
+}
+
+// ===== EXPORT =====
+const exportSupported = typeof window.showDirectoryPicker === "function";
+
+if (!exportSupported) {
+  $("exportNote").textContent = "내보내기는 Windows 데스크톱 Chrome에서만 지원됩니다.";
+} else {
+  $("exportNote").textContent = "모든 메모를 .md 파일로 내보냅니다.";
+}
+
+const exportDialog = $("exportDialog");
+
+$("exportBtn").addEventListener("click", () => {
+  if (!exportSupported || memos.length === 0) return;
+  const preview = $("exportPreview");
+  preview.innerHTML = "";
+  for (const m of memos) {
+    const div = document.createElement("div");
+    div.textContent = firstLine(m.text);
+    preview.appendChild(div);
+  }
+  exportDialog.showModal();
+});
+
+$("exportCancel").addEventListener("click", () => exportDialog.close());
+
+$("exportConfirm").addEventListener("click", async () => {
+  exportDialog.close();
+  await runExport();
+});
+
+// check if a filename already exists in the directory
+async function nameExists(dirHandle, filename) {
+  try {
+    await dirHandle.getFileHandle(filename, { create: false });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function runExport() {
+  if (!currentUid) return;
+  let dirHandle;
+  try {
+    dirHandle = await getDirHandle();
+  } catch (e) {
+    if (e && e.name === "AbortError") return; // user cancelled picker
+    toast("폴더 접근 실패: " + (e.code || e.message));
+    return;
+  }
+  if (!dirHandle) { toast("폴더 권한이 거부되었습니다."); return; }
+
+  // snapshot of memos to export (all)
+  const toExport = memos.slice();
+  // track names used within this run so two memos with same first line become separate files
+  const usedNames = new Set();
+
+  let succeeded = 0;
+  let failed = 0;
+
+  for (const memo of toExport) {
+    try {
+      // --- build unique filename ---
+      let base = baseName(memo.text, memo.created);
+      let filename = base + ".md";
+      // dedup against folder AND names produced in this run
+      if (usedNames.has(filename) || (await nameExists(dirHandle, filename))) {
+        const t = timeStamp(memo.created);
+        filename = base + "_" + t + ".md";
+        // if still colliding, keep appending seconds-based uniqueness
+        let i = 1;
+        while (usedNames.has(filename) || (await nameExists(dirHandle, filename))) {
+          filename = base + "_" + t + "-" + i + ".md";
+          i++;
+        }
+      }
+
+      // STRICT ORDER:
+      // 1. write the .md file
+      const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(buildMarkdown(memo));
+      await writable.close();
+
+      // 2. confirm the write succeeded (re-read the file)
+      const written = await fileHandle.getFile();
+      if (written.size === 0) {
+        throw new Error("write verification failed (empty file)");
+      }
+
+      // mark name as used only after confirmed write
+      usedNames.add(filename);
+
+      // 3. ONLY then deleteDoc that memo from Firestore
+      await deleteDoc(doc(db, "users", currentUid, "inbox", memo.id));
+
+      succeeded++;
+    } catch (e) {
+      // leave this memo in inbox; continue with the rest
+      failed++;
+      console.error("export failed for memo", memo.id, e);
+    }
+  }
+
+  toast(`내보내기 완료 · ${succeeded}건 성공, ${failed}건 실패`);
+}
+</script>
+</body>
+</html>
